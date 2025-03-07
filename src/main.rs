@@ -1,9 +1,11 @@
 extern crate libc;
 use std::io;
+use std::ffi::CString;
 
 fn main() {
     unsafe {
-        let message_key = libc::ftok(".".as_ptr() as *const i8, 'M' as i32);
+        let path = CString::new(".").expect("CString::new failed");
+        let message_key = libc::ftok(path.as_ptr() as *const i8, 'M' as i32);
         if message_key == -1 {
             #[cfg(target_os = "macos")]
             let errno = *libc::__error();
