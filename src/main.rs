@@ -12,6 +12,12 @@ fn errno() -> io::Error {
     io::Error::from_raw_os_error(unsafe { *libc::__errno_location() })
 }
 
+// define a message body
+struct Message {
+    msg_type: libc::c_long,
+    msg_data: [libc::c_char; 64],
+}
+
 fn main() {
     unsafe {
         let path = CString::new(".").expect("CString::new failed");
@@ -21,14 +27,24 @@ fn main() {
             process::exit(1);
         }
 
-        let message_qeueue_id: libc::c_int = libc::msgget(message_key, libc::IPC_CREAT | 0o660);
-        if message_qeueue_id == -1 {
+        let message_queue_id: libc::c_int = libc::msgget(message_key, libc::IPC_CREAT | 0o0660);
+        if message_queue_id == -1 {
             eprintln!("Cannot create message queue: {}", errno());
             process::exit(2);
         }
 
-        println!("Message queue ID: {}\n", message_qeueue_id);
+        println!("Message queue ID: {}\n", message_queue_id);
 
-        
+        let size_of_data = std::mem::size_of::<Message>() - std::mem::size_of::<libc::c_long>();
+
+        while true {
+            let mut message = Message {
+                msg_type: 0,
+                msg_data: [0; 64],
+            };
+
+            let a= libc::msgrcv(message_queue_id, message.msg_data.as_mut_ptr() as *mut libc::c_void, size_of_data, 1, 0);
+
+        }
     }
 }
